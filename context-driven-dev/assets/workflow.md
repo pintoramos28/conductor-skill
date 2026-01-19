@@ -8,6 +8,10 @@
 4. **High Code Coverage:** Aim for >80% code coverage for all modules
 5. **User Experience First:** Every decision should prioritize user experience
 6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+7. **Traceability:** Maintain links between requirements, tasks, acceptance criteria, and tests.
+8. **Draft-First Docs:** Create draft files for context artifacts before approval and keep them visible on disk. Drafts use the `*.draft.md` naming convention.
+
+9. **Traceability IDs:** Use REQ/TASK/AC/TEST IDs consistently. Reference the ID guide in the plan and keep mappings updated.
 
 ## Task Workflow
 
@@ -65,6 +69,15 @@ All tasks follow a strict lifecycle:
 11. **Commit Plan Update:**
     - **Action:** Stage the modified `plan.md` file.
     - **Action:** Commit this change with a descriptive message (e.g., `context(plan): Mark task 'Create user model' as complete`).
+
+12. **Update Traceability (Required):**
+    - **Action:** Update the traceability matrix in `plan.md` to reflect the completed task, acceptance criteria, and tests.
+    - **Template:**
+      ```markdown
+      | Req ID | Task ID | Acceptance Criteria (AC) | Test ID |
+      | --- | --- | --- | --- |
+      | REQ-001 | TASK-001 | AC-001 | TEST-001 |
+      ```
 
 ### Phase Completion Verification and Checkpointing Protocol
 
@@ -331,3 +344,9 @@ A task is complete when:
 - Document lessons learned
 - Optimize for user happiness
 - Keep things simple and maintainable
+
+## ID Reference Guide
+- **REQ-***: Defined in `context/spec.md` (project-level requirements) and referenced in track specs.
+- **TASK-***: Defined in the track `plan.md` task list.
+- **AC-***: Defined in the track `spec.md` acceptance criteria section.
+- **TEST-***: Defined in test files or test plan references; link to test IDs in code comments or test case names.

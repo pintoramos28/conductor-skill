@@ -14,24 +14,24 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 ## 1.1 SETUP CHECK
 **PROTOCOL: Verify that the context-driven environment is properly set up.**
 
-1.  **Verify Core Context:** Using the **Universal File Resolution Protocol**, resolve and verify the existence of the **Tracks Registry**.
+1.1.1.  **Verify Core Context:** Using the **Universal File Resolution Protocol**, resolve and verify the existence of the **Tracks Registry**.
 
-2.  **Verify Track Exists:** Check if the **Tracks Registry** is not empty.
+1.1.2.  **Verify Track Exists:** Check if the **Tracks Registry** is not empty.
 
-3.  **Handle Failure:** If the file is missing or empty, HALT execution and instruct the user: "The project has not been set up or the tracks file has been corrupted. Please run `/context:setup` to set up the plan, or restore the tracks file."
+1.1.3.  **Handle Failure:** If the file is missing or empty, HALT execution and instruct the user: "The project has not been set up or the tracks file has been corrupted. Please run `/context:setup` to set up the plan, or restore the tracks file."
 
 ---
 
 ## 2.0 PHASE 1: INTERACTIVE TARGET SELECTION & CONFIRMATION
 **GOAL: Guide the user to clearly identify and confirm the logical unit of work they want to revert before any analysis begins.**
 
-1.  **Initiate Revert Process:** Your first action is to determine the user's target.
+2.0.1.  **Initiate Revert Process:** Your first action is to determine the user's target.
 
-2.  **Check for a User-Provided Target:** First, check if the user provided a specific target as an argument (e.g., `/context:revert track <track_id>`).
+2.0.2.  **Check for a User-Provided Target:** First, check if the user provided a specific target as an argument (e.g., `/context:revert track <track_id>`).
     *   **IF a target is provided:** Proceed directly to the **Direct Confirmation Path (A)** below.
     *   **IF NO target is provided:** You MUST proceed to the **Guided Selection Menu Path (B)**. This is the default behavior.
 
-3.  **Interaction Paths:**
+2.0.3.  **Interaction Paths:**
 
     *   **PATH A: Direct Confirmation**
         1.  Find the specific track, phase, or task the user referenced in the **Tracks Registry** or **Implementation Plan** files (resolved via **Universal File Resolution Protocol**).
@@ -73,27 +73,27 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
                 * "Can you describe the task you want to revert?"
                 * Once a target is identified, loop back to Path A for final confirmation.
 
-4.  **Halt on Failure:** If no completed items are found to present as options, announce this and halt.
+2.0.4.  **Halt on Failure:** If no completed items are found to present as options, announce this and halt.
 
 ---
 
 ## 3.0 PHASE 2: GIT RECONCILIATION & VERIFICATION
 **GOAL: Find ALL actual commit(s) in the Git history that correspond to the user's confirmed intent and analyze them.**
 
-1.  **Identify Implementation Commits:**
+3.0.1.  **Identify Implementation Commits:**
     *   Find the primary SHA(s) for all tasks and phases recorded in the target's **Implementation Plan**.
     *   **Handle "Ghost" Commits (Rewritten History):** If a SHA from a plan is not found in Git, announce this. Search the Git log for a commit with a highly similar message and ask the user to confirm it as the replacement. If not confirmed, halt.
 
-2.  **Identify Associated Plan-Update Commits:**
+3.0.2.  **Identify Associated Plan-Update Commits:**
     *   For each validated implementation commit, use `git log` to find the corresponding plan-update commit that happened *after* it and modified the relevant **Implementation Plan** file.
 
-3.  **Identify the Track Creation Commit (Track Revert Only):**
+3.0.3.  **Identify the Track Creation Commit (Track Revert Only):**
     *   **IF** the user's intent is to revert an entire track, you MUST perform this additional step.
     *   **Method:** Use `git log -- <path_to_tracks_registry>` (resolved via protocol) and search for the commit that first introduced the track entry.
         *   Look for lines matching the standard format `- [ ] **Track: <Track Description>**`.
     *   Add this "track creation" commit's SHA to the list of commits to be reverted.
 
-4.  **Compile and Analyze Final List:**
+3.0.4.  **Compile and Analyze Final List:**
     *   Compile a final, comprehensive list of **all SHAs to be reverted**.
     *   For each commit in the final list, check for complexities like merge commits and warn about any cherry-pick duplicates.
 
@@ -102,7 +102,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 ## 4.0 PHASE 3: FINAL EXECUTION PLAN CONFIRMATION
 **GOAL: Present a clear, final plan of action to the user before modifying anything.**
 
-1.  **Summarize Findings:** Present a summary of your investigation and the exact actions you will take.
+4.0.1.  **Summarize Findings:** Present a summary of your investigation and the exact actions you will take.
     > "I have analyzed your request. Here is the plan:"
     > *   **Target:** Revert Task '[Task Description]'.
     > *   **Commits to Revert:** 2
@@ -110,7 +110,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     > `  - <sha_plan_commit> ('context(plan): Mark task complete')`
     > *   **Action:** I will run `git revert` on these commits in reverse order.
 
-2.  **Final Go/No-Go:** Ask for final confirmation: "**Do you want to proceed? (yes/no)**".
+4.0.2.  **Final Go/No-Go:** Ask for final confirmation: "**Do you want to proceed? (yes/no)**".
     - **Structure:**
         A) Yes
         B) No
@@ -121,7 +121,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 ## 5.0 PHASE 4: EXECUTION & VERIFICATION
 **GOAL: Execute the revert, verify the plan's state, and handle any runtime errors gracefully.**
 
-1.  **Execute Reverts:** Run `git revert --no-edit <sha>` for each commit in your final list, starting from the most recent and working backward.
-2.  **Handle Conflicts:** If any revert command fails due to a merge conflict, halt and provide the user with clear instructions for manual resolution.
-3.  **Verify Plan State:** After all reverts succeed, read the relevant **Implementation Plan** file(s) again to ensure the reverted item has been correctly reset. If not, perform a file edit to fix it and commit the correction.
-4.  **Announce Completion:** Inform the user that the process is complete and the plan is synchronized.
+5.0.1.  **Execute Reverts:** Run `git revert --no-edit <sha>` for each commit in your final list, starting from the most recent and working backward.
+5.0.2.  **Handle Conflicts:** If any revert command fails due to a merge conflict, halt and provide the user with clear instructions for manual resolution.
+5.0.3.  **Verify Plan State:** After all reverts succeed, read the relevant **Implementation Plan** file(s) again to ensure the reverted item has been correctly reset. If not, perform a file edit to fix it and commit the correction.
+5.0.4.  **Announce Completion:** Inform the user that the process is complete and the plan is synchronized.

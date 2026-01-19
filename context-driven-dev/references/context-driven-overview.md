@@ -7,6 +7,7 @@ Context-driven development structures work into a disciplined lifecycle:
 It treats context as versioned artifacts in the repo so every agent and teammate shares a single source of truth. Core ideas:
 
 - Create and maintain project context files (product definition, tech stack, workflow, etc.).
+- Keep drafts visible on disk before approval and embed a Q&A snapshot for traceability.
 - Create a **Track** for each feature or bug: a spec and an implementation plan.
 - Implement by following the plan and workflow, updating plan statuses, and using explicit verification steps.
 - Keep progress visible via the tracks registry.

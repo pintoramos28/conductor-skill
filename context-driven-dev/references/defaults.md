@@ -10,8 +10,11 @@ These defaults are mandatory. Use them even if the repo defines other convention
 - Product guidelines: `context/product-guidelines.md`
 - Tech stack: `context/tech-stack.md`
 - Workflow: `context/workflow.md`
+- Project spec: `context/spec.md`
 - Tracks registry: `context/tracks.md`
 - Tracks directory: `context/tracks/`
+- Requirements index: `context/requirements-index.md`
+- Decision log (ADRs): `context/decisions.md`
 - Track artifacts:
   - `context/tracks/<track_id>/spec.md`
   - `context/tracks/<track_id>/plan.md`
@@ -39,6 +42,9 @@ These defaults are mandatory. Use them even if the repo defines other convention
 - [Product Definition](./product.md)
 - [Product Guidelines](./product-guidelines.md)
 - [Tech Stack](./tech-stack.md)
+- [Project Spec](./spec.md)
+- [Requirements Index](./requirements-index.md)
+- [Decision Log](./decisions.md)
 
 ## Workflow
 - [Workflow](./workflow.md)
@@ -47,4 +53,10 @@ These defaults are mandatory. Use them even if the repo defines other convention
 ## Management
 - [Tracks Registry](./tracks.md)
 - [Tracks Directory](./tracks/)
+
+## Draft-first rule (applies to all context artifacts)
+
+- For every context artifact `context/<name>.md`, the draft version is `context/<name>.draft.md`.
+- Drafts MUST be created and kept in sync during edits.
+- Approved content MUST be written to the non-draft file (`context/<name>.md`), with the draft retained (or identical without the DRAFT header).
 ```

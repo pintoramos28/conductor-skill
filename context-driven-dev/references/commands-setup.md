@@ -46,7 +46,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 
 ### 2.0 Project Inception
-1.  **Detect Project Maturity:**
+2.0.1.  **Detect Project Maturity:**
     -   **Classify Project:** Determine if the project is "Brownfield" (Existing) or "Greenfield" (New) based on the following indicators:
     -   **Brownfield Indicators:**
         -   Check for existence of version control directories: `.git`, `.svn`, or `.hg`.
@@ -57,7 +57,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     -   **Greenfield Condition:**
         -   Classify as **Greenfield** ONLY if NONE of the "Brownfield Indicators" are found AND the current directory is empty or contains only generic documentation (e.g., a single `README.md` file) without functional code or dependencies.
 
-2.  **Execute Workflow based on Maturity:**
+2.0.2.  **Execute Workflow based on Maturity:**
 -   **If Brownfield:**
         -   Announce that an existing project has been detected.
         -   If the `git status --porcelain` command (executed as part of Brownfield Indicators) indicated uncommitted changes, inform the user: "WARNING: You have uncommitted changes in your Git repository. Please commit or stash your changes before proceeding, as Context-Driven will be making modifications."
@@ -97,25 +97,40 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         -   Announce that a new project will be initialized.
         -   Proceed to the next step in this file.
 
-3.  **Initialize Git Repository (for Greenfield):**
+2.0.3.  **Initialize Git Repository (for Greenfield):**
     -   If a `.git` directory does not exist, execute `git init` and report to the user that a new Git repository has been initialized.
 
-4.  **Inquire about Project Goal (for Greenfield):**
+2.0.4.  **Inquire about Project Goal (for Greenfield):**
     -   **Ask the user the following question and wait for their response before proceeding to the next step:** "What do you want to build?"
     -   **CRITICAL: You MUST NOT execute any tool calls until the user has provided a response.**
     -   **Upon receiving the user's response:**
         -   Execute `mkdir -p context`.
         -   **Initialize State File:** Immediately after creating the `context` directory, you MUST create `context/setup_state.json` with the exact content:
             `{"last_successful_step": ""}`
-        -   Write the user's response into `context/product.md` under a header named `# Initial Concept`.
+        -   Write the user's response into `context/product.draft.md` under a header named `# Initial Concept` and include a `DRAFT` header at the top.
+        -   Announce: "Draft saved to `context/product.draft.md`."
 
-5.  **Continue:** Immediately proceed to the next section.
+2.0.5.  **Continue:** Immediately proceed to the next section.
 
 ### 2.1 Generate Product Guide (Interactive)
-1.  **Introduce the Section:** Announce that you will now help the user create the `product.md`.
-2.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
-        -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
-        -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
+2.1.1.  **Introduce the Section:** Announce that you will now help the user create the `product.md`.
+2.1.2.  **Draft Persistence (Default):** All drafts MUST be written to `context/product.draft.md` with a `DRAFT` header at the top. Keep this file updated after every revision.
+2.1.3.  **Editing Guide (Default):** Include a short "Editing Guide" block in the draft explaining where to respond, how to mark edits, and how to signal done.
+2.1.4.  **Q&A Snapshot:** Embed a "Q&A Snapshot" section with the questions asked, the user's latest answers, and their status; keep it up-to-date in the draft.
+2.1.5.  **Q&A Snapshot Template (Required Block):** Use this exact template in the draft:
+```markdown
+## Q&A Snapshot (Draft)
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+```
+2.1.6.  **Question Status Rule:** Mark each question in the snapshot as **Open** or **Resolved**, and mark it as **Resolved** once complete.
+2.1.7.  **Document-Embedded Questions (Default):** Instead of single-question turns, embed all relevant questions directly into the draft with recommendations/options for each. The user edits/answers in the draft, and you iterate by re-reading the full draft, updating answers, adding new questions if needed, and marking questions as resolved.
+    -   **CONSTRAINT:** Limit the initial question set to a maximum of 5 questions per document per round; additional rounds may add questions if gaps remain.
+        -   **SUGGESTIONS:** For each question, generate a minimum of 3 high-quality suggested answers based on common patterns or context you already have.
         -   **Example Topics:** Target users, goals, features, etc
         *   **General Guidelines:**
             *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
@@ -127,45 +142,52 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
                 *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
 
             *   **3. Interaction Flow:**
-                    *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-                *   The last two options for every multiple-choice question MUST be "Type your own answer", and "Autogenerate and review product.md".
-                *   Confirm your understanding by summarizing before moving on.
-            - **Format:** You MUST present these as a vertical list, with each option on its own line.
-            - **Structure:**
+            *   **CRITICAL:** Questions must live in the draft. Do not run a one-by-one Q&A in chat.
+            *   The last option for every multiple-choice question MUST be "Type your own answer".
+            *   After user edits, summarize changes in one consolidated response and update each question status in the Q&A Snapshot.
+            - **Format (in draft):** You MUST present these as a vertical list, with each option on its own line.
+            - **Structure (in draft):**
                 A) [Option A]
                 B) [Option B]
                 C) [Option C]
                 D) [Type your own answer]
-                E) [Autogenerate and review product.md]
     -   **FOR EXISTING PROJECTS (BROWNFIELD):** Ask project context-aware questions based on the code analysis.
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `product.md` content, write it to the file, and proceed to the next section.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+2.1.8.  **Draft the Document:** Once the dialogue is complete, generate the content for `product.draft.md`. Use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
     -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
         -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
-4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the product guide. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted product.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with the CLI built-in option "Modify with external editor" (if present), or with your favorite external editor after this step.
-    > Please respond with A or B."
-    - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
-5.  **Write File:** Once approved, append the generated content to the existing `context/product.md` file, preserving the `# Initial Concept` section.
-6.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
+    -   **Q&A Snapshot:** Embed a "Q&A Snapshot" section containing the questions asked, the user's latest answers, and their status. This snapshot MUST be included in the draft and carried into the approved document.
+    -   **Draft Write:** Write the draft to `context/product.draft.md` immediately after generation.
+    -   **Draft Status:** Announce whether the draft was written or updated, and confirm the exact path.
+    -   **Re-read Requirement:** If the user indicates they edited externally, you MUST re-read the full draft and summarize changes before proceeding.
+2.1.9.  **User Confirmation Loop (Document-Embedded):**
+    - Announce that the draft is ready for review and that feedback should be added directly in the draft.
+    - Instruct the user to edit `context/product.draft.md` (inline comments or direct edits) and reply with "done editing".
+    - Re-read the full draft, summarize changes, update the Q&A Snapshot status.
+    - Repeat until the user confirms the draft is ready to finalize.
+2.1.10.  **Write File:** Once approved, write the approved content (including `# Initial Concept`) to `context/product.md` and keep the `context/product.draft.md` in sync (either identical or with a `DRAFT` header removed).
+2.1.11.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
     `{"last_successful_step": "2.1_product_guide"}`
-7.  **Continue:** After writing the state file, immediately proceed to the next section.
+2.1.12.  **Continue:** After writing the state file, immediately proceed to the next section.
 
 ### 2.2 Generate Product Guidelines (Interactive)
-1.  **Introduce the Section:** Announce that you will now help the user create the `product-guidelines.md`.
-2.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
-    -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
-    -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have. Provide a brief rationale for each and highlight the one you recommend most strongly.
+2.2.1.  **Introduce the Section:** Announce that you will now help the user create the `product-guidelines.md`.
+2.2.2.  **Draft Persistence (Default):** All drafts MUST be written to `context/product-guidelines.draft.md` with a `DRAFT` header at the top. Keep this file updated after every revision.
+2.2.3.  **Editing Guide (Default):** Include a short "Editing Guide" block in the draft explaining where to respond, how to mark edits, and how to signal done.
+2.2.4.  **Q&A Snapshot:** Embed a "Q&A Snapshot" section with the questions asked, the user's latest answers, and their status; keep it up-to-date in the draft.
+2.2.5.  **Q&A Snapshot Template (Required Block):** Use this exact template in the draft:
+```markdown
+## Q&A Snapshot (Draft)
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+```
+2.2.6.  **Question Status Rule:** Mark each question in the snapshot as **Open** or **Resolved**, and mark it as **Resolved** once complete.
+2.2.7.  **Document-Embedded Questions (Default):** Instead of single-question turns, embed all relevant questions directly into the draft with recommendations/options for each. The user edits/answers in the draft, and you iterate by re-reading the full draft, updating answers, adding new questions if needed, and marking questions as resolved.
+    -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions per round.
+    -   **SUGGESTIONS:** For each question, generate a minimum of 3 high-quality suggested answers based on common patterns or context you already have. Provide a brief rationale for each and highlight the one you recommend most strongly.
     -   **Example Topics:** Prose style, brand messaging, visual identity, etc
     *   **General Guidelines:**
         *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
@@ -178,44 +200,51 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Autogenerate and review product-guidelines.md".
-            *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
+            *   **CRITICAL:** Questions must live in the draft. Do not run a one-by-one Q&A in chat.
+            *   The last option for every multiple-choice question MUST be "Type your own answer".
+            *   After user edits, summarize changes in one consolidated response and update each question status in the Q&A Snapshot.
+        - **Format (in draft):** You MUST present these as a vertical list, with each option on its own line.
+        - **Structure (in draft):**
             A) [Option A]
             B) [Option B]
             C) [Option C]
             D) [Type your own answer]
-            E) [Autogenerate and review product-guidelines.md]
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section and proceed to the next step to draft the document.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product-guidelines.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+2.2.8.  **Draft the Document:** Once the dialogue is complete, generate the content for `product-guidelines.draft.md`. Use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
      **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
     -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
-4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the product guidelines. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted product-guidelines.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with the CLI built-in option "Modify with external editor" (if present), or with your favorite external editor after this step.
-    > Please respond with A or B."
-    - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
-5.  **Write File:** Once approved, write the generated content to the `context/product-guidelines.md` file.
-6.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
+    -   **Q&A Snapshot:** Embed a "Q&A Snapshot" section containing the questions asked, the user's latest answers, and their status. This snapshot MUST be included in the draft and carried into the approved document.
+    -   **Draft Write:** Write the draft to `context/product-guidelines.draft.md` immediately after generation.
+    -   **Draft Status:** Announce whether the draft was written or updated, and confirm the exact path.
+    -   **Re-read Requirement:** If the user indicates they edited externally, you MUST re-read the full draft and summarize changes before proceeding.
+2.2.9.  **User Confirmation Loop (Document-Embedded):**
+    - Announce that the draft is ready for review and that feedback should be added directly in the draft.
+    - Instruct the user to edit `context/product-guidelines.draft.md` (inline comments or direct edits) and reply with "done editing".
+    - Re-read the full draft, summarize changes, update the Q&A Snapshot status.
+    - Repeat until the user confirms the draft is ready to finalize.
+2.2.10.  **Write File:** Once approved, write the approved content to `context/product-guidelines.md` and keep the `context/product-guidelines.draft.md` in sync (either identical or with a `DRAFT` header removed).
+2.2.11.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
     `{"last_successful_step": "2.2_product_guidelines"}`
-7.  **Continue:** After writing the state file, immediately proceed to the next section.
+2.2.12.  **Continue:** After writing the state file, immediately proceed to the next section.
 
 ### 2.3 Generate Tech Stack (Interactive)
-1.  **Introduce the Section:** Announce that you will now help define the technology stacks.
-2.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
-    -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
-    -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
+2.3.1.  **Introduce the Section:** Announce that you will now help define the technology stacks.
+2.3.2.  **Draft Persistence (Default):** All drafts MUST be written to `context/tech-stack.draft.md` with a `DRAFT` header at the top. Keep this file updated after every revision.
+2.3.3.  **Editing Guide (Default):** Include a short "Editing Guide" block in the draft explaining where to respond, how to mark edits, and how to signal done.
+2.3.4.  **Q&A Snapshot:** Embed a "Q&A Snapshot" section with the questions asked, the user's latest answers, and their status; keep it up-to-date in the draft.
+2.3.5.  **Q&A Snapshot Template (Required Block):** Use this exact template in the draft:
+```markdown
+## Q&A Snapshot (Draft)
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+- Q: [Question]
+  A: [Latest answer]
+  Status: [Open | Resolved]
+```
+2.3.6.  **Question Status Rule:** Mark each question in the snapshot as **Open** or **Resolved**, and mark it as **Resolved** once complete.
+2.3.7.  **Document-Embedded Questions (Default):** Instead of single-question turns, embed all relevant questions directly into the draft with recommendations/options for each. The user edits/answers in the draft, and you iterate by re-reading the full draft, updating answers, adding new questions if needed, and marking questions as resolved.
+    -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions per round.
+    -   **SUGGESTIONS:** For each question, generate a minimum of 3 high-quality suggested answers based on common patterns or context you already have.
     -   **Example Topics:** programming languages, frameworks, databases, etc
     *   **General Guidelines:**
         *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
@@ -228,16 +257,15 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Autogenerate and review tech-stack.md".
-            *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
+            *   **CRITICAL:** Questions must live in the draft. Do not run a one-by-one Q&A in chat.
+            *   The last option for every multiple-choice question MUST be "Type your own answer".
+            *   After user edits, summarize changes in one consolidated response and update each question status in the Q&A Snapshot.
+        - **Format (in draft):** You MUST present these as a vertical list, with each option on its own line.
+        - **Structure (in draft):**
             A) [Option A]
             B) [Option B]
             C) [Option C]
             D) [Type your own answer]
-            E) [Autogenerate and review tech-stack.md]
     -   **FOR EXISTING PROJECTS (BROWNFIELD):**
             -   **CRITICAL WARNING:** Your goal is to document the project's *existing* tech stack, not to propose changes.
             -   **State the Inferred Stack:** Based on the code analysis, you MUST state the technology stack that you have inferred. Do not present any other options.
@@ -245,32 +273,37 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
                 A) Yes, this is correct.
                 B) No, I need to provide the correct tech stack.
             -   **Handle Disagreement:** If the user disputes the suggestion, acknowledge their input and allow them to provide the correct technology stack manually as a last resort.
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `tech-stack.md` content, write it to the file, and proceed to the next section.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `tech-stack.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+2.3.8.  **Draft the Document:** Once the dialogue is complete, generate the content for `tech-stack.draft.md`. Use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
     -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
     -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
-4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the tech stack document. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted tech-stack.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with the CLI built-in option "Modify with external editor" (if present), or with your favorite external editor after this step.
-    > Please respond with A or B."
-    - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
-6.  **Write File:** Once approved, write the generated content to the `context/tech-stack.md` file.
-7.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
+    -   **Testing Stack:** Always include a testing stack recommendation (unit, integration, e2e) and note if any are TBD.
+    -   **Versions:** Include recommended versions for primary frameworks and libraries.
+    -   **Pros/Cons:** Provide context-aware pros/cons for each option presented.
+    -   **Draft Write:** Write the draft to `context/tech-stack.draft.md` immediately after generation.
+    -   **Draft Status:** Announce whether the draft was written or updated, and confirm the exact path.
+    -   **Re-read Requirement:** If the user indicates they edited externally, you MUST re-read the full draft and summarize changes before proceeding.
+2.3.9.  **User Confirmation Loop (Document-Embedded):**
+    - Announce that the draft is ready for review and that feedback should be added directly in the draft.
+    - Instruct the user to edit `context/tech-stack.draft.md` (inline comments or direct edits) and reply with "done editing".
+    - Re-read the full draft, summarize changes, update the Q&A Snapshot status.
+    - Repeat until the user confirms the draft is ready to finalize.
+2.3.10.  **Write File:** Once approved, write the approved content to the `context/tech-stack.md` file and keep the `context/tech-stack.draft.md` in sync (either identical or with a `DRAFT` header removed).
+2.3.11.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `context/setup_state.json` with the exact content:
     `{"last_successful_step": "2.3_tech_stack"}`
-8.  **Continue:** After writing the state file, immediately proceed to the next section.
+2.3.12.  **Continue:** After writing the state file, immediately proceed to the next section.
+
+### 2.3.13 Drafted Document Editing Guide (Required Block)
+Include this block in every draft document (product, product-guidelines, tech-stack, workflow, spec, requirements-index, decisions):
+```markdown
+## Editing Guide (Draft)
+- Please add edits directly in this document.
+- Mark your changes with `<!-- EDIT -->` comments if you want me to spot them quickly.
+- When you're done, reply with "done editing" and I will re-read the full document.
+```
 
 ### 2.4 Select Guides (Interactive)
-1.  **Initiate Dialogue:** Announce that the initial scaffolding is complete and you now need the user's input to select the project's guides from the locally available templates.
-2.  **Select Code Style Guides:**
+2.4.1.  **Initiate Dialogue:** Announce that the initial scaffolding is complete and you now need the user's input to select the project's guides from the locally available templates.
+2.4.2.  **Select Code Style Guides:**
     -   List the available style guides by running `ls assets/code_styleguides/`.
     -   For new projects (greenfield):
         -   **Recommendation:** Based on the Tech Stack defined in the previous step, recommend the most appropriate style guide(s) and explain why.
@@ -291,9 +324,10 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         `{"last_successful_step": "2.4_code_styleguides"}`
 
 ### 2.5 Select Workflow (Interactive)
-1.  **Copy Initial Workflow:**
+2.5.1.  **Copy Initial Workflow:**
     -   Copy `assets/workflow.md` to `context/workflow.md`.
-2.  **Customize Workflow:**
+    -   Also write a draft copy to `context/workflow.draft.md` with a `DRAFT` header and the Editing Guide block.
+2.5.2.  **Customize Workflow:**
     -   Ask the user: "Do you want to use the default workflow or customize it?"
         The default workflow includes:
          - 80% code test coverage
@@ -311,12 +345,17 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         -   **Question 3:** "Do you want to use git notes or the commit message to record the task summary?"
             -   A) Git Notes (Recommended)
             -   B) Commit Message
-        -   **Action:** Update `context/workflow.md` based on the user's responses.
+        -   **Action:** Update `context/workflow.md` based on the user's responses and keep `context/workflow.draft.md` in sync.
         -   **Commit State:** After the `workflow.md` file is successfully written or updated, you MUST immediately write to `context/setup_state.json` with the exact content:
             `{"last_successful_step": "2.5_workflow"}`
+2.5.3.  **Workflow Approval (Document-Embedded):**
+    - Announce that the workflow draft is ready for review and that feedback should be added directly in `context/workflow.draft.md`.
+    - Instruct the user to edit the draft (inline comments or direct edits) and reply with "done editing".
+    - Re-read the full draft, summarize changes, and confirm it is ready to finalize.
+    - Finalize by syncing `context/workflow.md` to the approved draft.
 
 ### 2.6 Finalization
-1.  **Generate Index File:**
+2.6.1.  **Generate Index File:**
     -   Create `context/index.md` with the following content:
         ```markdown
         # Project Context
@@ -325,6 +364,9 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         - [Product Definition](./product.md)
         - [Product Guidelines](./product-guidelines.md)
         - [Tech Stack](./tech-stack.md)
+        - [Project Spec](./spec.md)
+        - [Requirements Index](./requirements-index.md)
+        - [Decision Log](./decisions.md)
 
         ## Workflow
         - [Workflow](./workflow.md)
@@ -336,22 +378,33 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         ```
     -   **Announce:** "Created `context/index.md` to serve as the project context index."
 
-2.  **Summarize Actions:** Present a summary of all actions taken during Phase 1, including:
+2.6.2.  **Initialize Core Context Artifacts (If Missing):**
+    -   Create `context/spec.draft.md` with a placeholder header `# Project Spec (Draft)` if it does not exist.
+    -   Create `context/requirements-index.draft.md` with a placeholder header `# Requirements Index (Draft)` if it does not exist.
+    -   Create `context/decisions.draft.md` with a placeholder header `# Decision Log (Draft)` if it does not exist.
+    -   Include the Editing Guide block in each of these draft files.
+    -   Ensure the non-draft files (`context/spec.md`, `context/requirements-index.md`, `context/decisions.md`) are created from approved draft content.
+    -   Announce which files were created.
+
+2.6.3.  **Summarize Actions:** Present a summary of all actions taken during Phase 1, including:
     -   The guide files that were copied.
     -   The workflow file that was copied.
-3.  **Transition to initial plan and track generation:** Announce that the initial setup is complete and you will now proceed to define the first track for the project.
+    -   The draft files that remain on disk and their paths.
+    -   Which artifacts were finalized to non-draft versions.
+2.6.4.  **Transition to initial plan and track generation:** Announce that the initial setup is complete and you will now proceed to define the first track for the project.
 
 ---
 
 ## 3.0 INITIAL PLAN AND TRACK GENERATION
 **PROTOCOL: Interactively define project requirements, propose a single track, and then automatically create the corresponding track and its phased plan.**
 
-### 3.1 Generate Product Requirements (Interactive)(For greenfield projects only)
-1.  **Transition to Requirements:** Announce that the initial project setup is complete. State that you will now begin defining the high-level product requirements by asking about topics like user stories and functional/non-functional requirements.
-2.  **Analyze Context:** Read and analyze the content of `context/product.md` to understand the project's core concept.
-3.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
-    -   **CONSTRAINT** Limit your inquiries to a maximum of 5 questions.
-    -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
+### 3.1 Generate Product Requirements (Document-Embedded)(For greenfield projects only)
+3.1.1.  **Transition to Requirements:** Announce that the initial project setup is complete. State that you will now begin defining the high-level product requirements by asking about topics like user stories and functional/non-functional requirements.
+3.1.2.  **Analyze Context:** Read and analyze the content of `context/product.md` (or `context/product.draft.md` if not finalized) to understand the project's core concept.
+3.1.3.  **Document-Embedded Questions (Default):** Embed all relevant questions directly into `context/spec.draft.md` (Project Spec Draft) under a "Requirements (Draft)" section, with recommendations/options for each. The user edits/answers in the draft, and you iterate by re-reading the full draft, updating answers, adding new questions if needed, and marking questions as resolved. Apply the **Format (in draft)** and **Structure (in draft)** guidance inside the draft.
+    -   **Q&A Snapshot:** Include a Q&A Snapshot section in `context/spec.draft.md` using the same template and status rule as other drafts.
+    -   **CONSTRAINT** Limit your inquiries to a maximum of 5 questions per round.
+    -   **SUGGESTIONS:** For each question, generate a minimum of 3 high-quality suggested answers based on common patterns or context you already have.
     *   **General Guidelines:**
         *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
             *   Use **Additive** for brainstorming and defining scope (e.g., users, goals, features, project guidelines). These questions allow for multiple answers.
@@ -362,23 +415,27 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Auto-generate the rest of requirements and move to the next step".
-            *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
+            *   **CRITICAL:** Questions must live in the draft. Do not run a one-by-one Q&A in chat.
+            *   The last option for every multiple-choice question MUST be "Type your own answer".
+            *   After user edits, summarize changes in one consolidated response and update each question status in the Q&A Snapshot.
+        - **Format (in draft):** You MUST present these as a vertical list, with each option on its own line.
+        - **Structure (in draft):**
             A) [Option A]
             B) [Option B]
             C) [Option C]
             D) [Type your own answer]
-            E) [Auto-generate the rest of requirements and move to the next step]
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context.
 -   **CRITICAL:** When processing user responses or auto-generating content, the source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented. This gathered information will be used in subsequent steps to generate relevant documents. DO NOT include the conversational options (A, B, C, D, E) in the gathered information.
-4.  **Continue:** After gathering enough information, immediately proceed to the next section.
+3.1.4.  **Confirmation Loop (Document-Embedded):**
+    - Announce that the project spec draft is ready for review and that feedback should be added directly in `context/spec.draft.md`.
+    - Instruct the user to edit the draft (inline comments or direct edits) and reply with "done editing".
+    - Re-read the full draft, summarize changes, and update each question status in the Q&A Snapshot.
+    - Repeat until the user confirms the draft is ready to finalize.
+3.1.5.  **Finalize Spec:** Once approved, write the approved content to `context/spec.md` and keep `context/spec.draft.md` in sync.
+3.1.6.  **Continue:** After finalizing `context/spec.md`, proceed to the next section.
 
 ### 3.2 Propose a Single Initial Track (Automated + Approval)
-1.  **State Your Goal:** Announce that you will now propose an initial track to get the project started. Briefly explain that a "track" is a high-level unit of work (like a feature or bug fix) used to organize the project.
-2.  **Generate Track Title:** Analyze the project context (`product.md`, `tech-stack.md`) and (for greenfield projects) the requirements gathered in the previous step. Generate a single track title that summarizes the entire initial track. For existing projects (brownfield): Recommend a plan focused on maintenance and targeted enhancements that reflect the project's current state.
+3.2.1.  **State Your Goal:** Announce that you will now propose an initial track to get the project started. Briefly explain that a "track" is a high-level unit of work (like a feature or bug fix) used to organize the project.
+3.2.2.  **Generate Track Title:** Analyze the project context (`product.md` or `product.draft.md`, `tech-stack.md` or `tech-stack.draft.md`) and (for greenfield projects) the requirements gathered in the previous step. Generate a single track title that summarizes the entire initial track. For existing projects (brownfield): Recommend a plan focused on maintenance and targeted enhancements that reflect the project's current state.
     - Greenfield project example (usually MVP):
         ```markdown
         To create the MVP of this project, I suggest the following track:
@@ -389,11 +446,11 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         To create the first track of this project, I suggest the following track:
         - Create user authentication flow for user sign in.
         ```
-3.  **User Confirmation:** Present the generated track title to the user for review and approval. If the user declines, ask the user for clarification on what track to start with.
+3.2.3.  **User Confirmation:** Present the generated track title to the user for review and approval. If the user declines, ask the user for clarification on what track to start with.
 
 ### 3.3 Convert the Initial Track into Artifacts (Automated)
-1.  **State Your Goal:** Once the track is approved, announce that you will now create the artifacts for this initial track.
-2.  **Initialize Tracks File:** Create the `context/tracks.md` file with the initial header and the first track:
+3.3.1.  **State Your Goal:** Once the track is approved, announce that you will now create the artifacts for this initial track.
+3.3.2.  **Initialize Tracks File:** Create the `context/tracks.md` file with the initial header and the first track:
     ```markdown
     # Project Tracks
 
@@ -405,20 +462,21 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
       *Link: [./<Tracks Directory Name>/<track_id>/](./<Tracks Directory Name>/<track_id>/)*
     ```
     (Replace `<Tracks Directory Name>` with the actual name of the tracks folder resolved via the protocol.)
-3.  **Generate Track Artifacts:**
-    a. **Define Track:** The approved title is the track description.
-    b. **Generate Track-Specific Spec & Plan:**
-        i. Automatically generate a detailed `spec.md` for this track.
-        ii. Automatically generate a `plan.md` for this track.
-            - **CRITICAL:** The structure of the tasks must adhere to the principles outlined in the workflow file at `context/workflow.md`. For example, if the workflow specificies Test-Driven Development, each feature task must be broken down into a "Write Tests" sub-task followed by an "Implement Feature" sub-task.
+3.3.3.  **Generate Track Artifacts:**
+3.3.3.1.  **Define Track:** The approved title is the track description.
+3.3.3.2.  **Generate Track-Specific Spec & Plan:**
+3.3.3.2.1.  Automatically generate a detailed `spec.draft.md` for this track.
+3.3.3.2.2.  Include the Q&A Snapshot template and status rule in the initial track spec draft.
+3.3.3.2.3.  Automatically generate a `plan.draft.md` for this track.
+            - **CRITICAL:** The structure of the tasks in `plan.draft.md` must adhere to the principles outlined in the workflow file at `context/workflow.md`. For example, if the workflow specifies Test-Driven Development, each feature task must be broken down into a "Write Tests" sub-task followed by an "Implement Feature" sub-task.
             - **CRITICAL:** Include status markers `[ ]` for **EVERY** task and sub-task. The format must be:
                 - Parent Task: `- [ ] Task: ...`
                 - Sub-task: `    - [ ] ...`
-            - **CRITICAL: Inject Phase Completion Tasks.** You MUST read the `context/workflow.md` file to determine if a "Phase Completion Verification and Checkpointing Protocol" is defined. If this protocol exists, then for each **Phase** that you generate in `plan.md`, you MUST append a final meta-task to that phase. The format for this meta-task is: `- [ ] Task: Context-Driven - User Manual Verification '<Phase Name>' (Protocol in workflow.md)`. You MUST replace `<Phase Name>` with the actual name of the phase.
-    c. **Create Track Artifacts:**
-        i. **Generate and Store Track ID:** Create a unique Track ID from the track description using format `shortname_YYYYMMDD` and store it. You MUST use this exact same ID for all subsequent steps for this track.
-        ii. **Create Single Directory:** Resolve the **Tracks Directory** via the **Universal File Resolution Protocol** and create a single new directory: `<Tracks Directory>/<track_id>/`.
-        iii. **Create `metadata.json`:** In the new directory, create a `metadata.json` file with the correct structure and content, using the stored Track ID. An example is:
+            - **CRITICAL: Inject Phase Completion Tasks.** You MUST read the `context/workflow.md` file to determine if a "Phase Completion Verification and Checkpointing Protocol" is defined. If this protocol exists, then for each **Phase** that you generate in `plan.draft.md`, you MUST append a final meta-task to that phase. The format for this meta-task is: `- [ ] Task: Context-Driven - User Manual Verification '<Phase Name>' (Protocol in workflow.md)`. You MUST replace `<Phase Name>` with the actual name of the phase.
+3.3.3.3.  **Create Track Artifacts:**
+3.3.3.3.1.  **Generate and Store Track ID:** Create a unique Track ID from the track description using format `shortname_YYYYMMDD` and store it. You MUST use this exact same ID for all subsequent steps for this track.
+3.3.3.3.2.  **Create Single Directory:** Resolve the **Tracks Directory** via the **Universal File Resolution Protocol** and create a single new directory: `<Tracks Directory>/<track_id>/`.
+3.3.3.3.3.  **Create `metadata.json`:** In the new directory, create a `metadata.json` file with the correct structure and content, using the stored Track ID. An example is:
             - ```json
             {
             "track_id": "<track_id>",
@@ -430,8 +488,9 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             }
             ```
         Populate fields with actual values. Use the current timestamp.
-        iv. **Write Spec and Plan Files:** In the exact same directory, write the generated `spec.md` and `plan.md` files.
-        v.  **Write Index File:** In the exact same directory, write `index.md` with content:
+3.3.3.3.4.  **Write Spec and Plan Files:** In the exact same directory, write the generated `spec.draft.md` and `plan.draft.md` files.
+3.3.3.3.5.  **Review/Approval (Document-Embedded):** Ask the user to review and edit both drafts in place, re-read and summarize changes, then finalize `spec.md` and `plan.md` from the approved drafts.
+3.3.3.3.6.  **Write Index File:** In the exact same directory, write `index.md` with content:
             ```markdown
             # Track <track_id> Context
 

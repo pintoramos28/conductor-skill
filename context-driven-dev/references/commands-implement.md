@@ -8,29 +8,29 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 ## 1.1 SETUP CHECK
 **PROTOCOL: Verify that the context-driven environment is properly set up.**
 
-1.  **Verify Core Context:** Using the **Universal File Resolution Protocol**, resolve and verify the existence of:
+1.1.1.  **Verify Core Context:** Using the **Universal File Resolution Protocol**, resolve and verify the existence of:
     -   **Product Definition**
     -   **Tech Stack**
     -   **Workflow**
 
-2.  **Handle Failure:** If ANY of these are missing (or their resolved paths do not exist), Announce: "Context-driven environment is not set up. Please run `/context:setup`." and HALT.
+1.1.2.  **Handle Failure:** If ANY of these are missing (or their resolved paths do not exist), Announce: "Context-driven environment is not set up. Please run `/context:setup`." and HALT.
 
 
 ---
 
-## 2.0 TRACK SELECTION
+## 2.1 TRACK SELECTION
 **PROTOCOL: Identify and select the track to be implemented.**
 
-1.  **Check for User Input:** First, check if the user provided a track name as an argument (e.g., `/context:implement <track_description>`).
+2.1.1.  **Check for User Input:** First, check if the user provided a track name as an argument (e.g., `/context:implement <track_description>`).
 
-2.  **Locate and Parse Tracks Registry:**
+2.1.2.  **Locate and Parse Tracks Registry:**
     -   Resolve the **Tracks Registry**.
     -   Read and parse this file. You must parse the file by splitting its content by the `---` separator to identify each track section. For each section, extract the status (`[ ]`, `[~]`, `[x]`), the track description (from the list item format `- [ ] **Track: <Description>**`), and the link to the track folder.
     -   **CRITICAL:** If no track sections are found after parsing, announce: "The tracks file is empty or malformed. No tracks to implement." and halt.
 
-3.  **Continue:** Immediately proceed to the next step to select a track.
+2.1.3.  **Continue:** Immediately proceed to the next step to select a track.
 
-4.  **Select Track:**
+2.1.4.  **Select Track:**
     -   **If a track name was provided:**
         1.  Perform an exact, case-insensitive match for the provided name against the track descriptions you parsed.
         2.  If a unique match is found, confirm the selection with the user: "I found track '<track_description>'. Is this correct?"
@@ -44,33 +44,33 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             -   Announce: "No incomplete tracks found in the tracks file. All tasks are completed!"
             -   Halt the process and await further user instructions.
 
-5.  **Handle No Selection:** If no track is selected, inform the user and await further instructions.
+2.1.5.  **Handle No Selection:** If no track is selected, inform the user and await further instructions.
 
 ---
 
-## 3.0 TRACK IMPLEMENTATION
+## 3.1 TRACK IMPLEMENTATION
 **PROTOCOL: Execute the selected track.**
 
-1.  **Announce Action:** Announce which track you are beginning to implement.
+3.1.1.  **Announce Action:** Announce which track you are beginning to implement.
 
-2.  **Update Status to 'In Progress':**
+3.1.2.  **Update Status to 'In Progress':**
     -   Before beginning any work, you MUST update the status of the selected track in the **Tracks Registry** file.
     -   This requires finding the specific track line (e.g., `- [ ] **Track: <Description>**`) and replacing it with the updated status (e.g., `- [~] **Track: <Description>**`) in the **Tracks Registry** file you identified earlier.
 
-3.  **Load Track Context:**
+3.1.3.  **Load Track Context:**
     a. **Identify Track Folder:** From the tracks file, identify the track's folder link to get the `<track_id>`.
     b. **Read Files:**
         -   **Track Context:** Using the **Universal File Resolution Protocol**, resolve and read the **Specification** and **Implementation Plan** for the selected track.
         -   **Workflow:** Resolve **Workflow** (via the **Universal File Resolution Protocol** using the project's index file).
     c. **Error Handling:** If you fail to read any of these files, you MUST stop and inform the user of the error.
 
-4.  **Execute Tasks and Update Track Plan:**
+3.1.4.  **Execute Tasks and Update Track Plan:**
     a. **Announce:** State that you will now execute the tasks from the track's **Implementation Plan** by following the procedures in the **Workflow**.
     b. **Iterate Through Tasks:** You MUST now loop through each task in the track's **Implementation Plan** one by one.
     c. **For Each Task, You MUST:**
         i. **Defer to Workflow:** The **Workflow** file is the **single source of truth** for the entire task lifecycle. You MUST now read and execute the procedures defined in the "Task Workflow" section of the **Workflow** file you have in your context. Follow its steps for implementation, testing, and committing precisely.
 
-5.  **Finalize Track:**
+3.1.5.  **Finalize Track:**
     -   After all tasks in the track's local **Implementation Plan** are completed, you MUST update the track's status in the **Tracks Registry**.
     -   This requires finding the specific track line (e.g., `- [~] **Track: <Description>**`) and replacing it with the completed status (e.g., `- [x] **Track: <Description>**`).
     -   **Commit Changes:** Stage the **Tracks Registry** file and commit with the message `chore(context): Mark track '<track_description>' as complete`.
@@ -78,45 +78,60 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 ---
 
-## 4.0 SYNCHRONIZE PROJECT DOCUMENTATION
+## 4.1 SYNCHRONIZE PROJECT DOCUMENTATION
 **PROTOCOL: Update project-level documentation based on the completed track.**
 
-1.  **Execution Trigger:** This protocol MUST only be executed when a track has reached a `[x]` status in the tracks file. DO NOT execute this protocol for any other track status changes.
+4.1.1.  **Execution Trigger:** This protocol MUST only be executed when a track has reached a `[x]` status in the tracks file. DO NOT execute this protocol for any other track status changes.
 
-2.  **Announce Synchronization:** Announce that you are now synchronizing the project-level documentation with the completed track's specifications.
+4.1.2.  **Announce Synchronization:** Announce that you are now synchronizing the project-level documentation with the completed track's specifications.
 
-3.  **Load Track Specification:** Read the track's **Specification**.
+4.1.3.  **Load Track Specification:** Read the track's **Specification**.
 
-4.  **Load Project Documents:**
+4.1.4.  **Load Project Documents:**
     -   Resolve and read:
         -   **Product Definition**
         -   **Tech Stack**
         -   **Product Guidelines**
+        -   **Project Spec**
+        -   **Requirements Index**
+        -   **Decision Log (ADRs)**
 
-5.  **Analyze and Update:**
+4.1.5.  **Analyze and Update:**
     a.  **Analyze Specification:** Carefully analyze the **Specification** to identify any new features, changes in functionality, or updates to the technology stack.
-    b.  **Update Product Definition:**
+    b.  **Update Requirements Index:**
+        i. **Condition for Update:** If new requirements were added or updated in the track spec, update `context/requirements-index.md` to reference the track and any related tasks.
+        ii. **Propose and Confirm Changes (Document-Embedded):** Write proposed updates into a draft copy `context/requirements-index.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Finalize to `context/requirements-index.md` after approval.
+        iii. **Action:** Only after approval, update `context/requirements-index.md`.
+    c.  **Update Decision Log (ADRs):**
+        i. **Condition for Update:** If the track spec references new ADRs or scope/constraint changes, ensure `context/decisions.md` includes those entries.
+        ii. **Propose and Confirm Changes (Document-Embedded):** Write proposed updates into a draft copy `context/decisions.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Finalize to `context/decisions.md` after approval.
+        iii. **Action:** Only after approval, update `context/decisions.md`.
+    d.  **Update Project Spec (Hybrid Model):**
+        i. **Condition for Update:** If the track specification includes a "Project Spec Delta", propose updating the project-level `spec.md`.
+        ii. **Propose and Confirm Changes (Document-Embedded):** Write proposed updates into a draft copy `context/spec.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Finalize to `context/spec.md` after approval.
+        iii. **Action:** Only after approval, update `context/spec.md`.
+    e.  **Update Product Definition:**
         i. **Condition for Update:** Based on your analysis, you MUST determine if the completed feature or bug fix significantly impacts the description of the product itself.
-        ii. **Propose and Confirm Changes:** If an update is needed, generate the proposed changes. Then, present them to the user for confirmation:
+        ii. **Propose and Confirm Changes (Document-Embedded):** If an update is needed, write proposed changes into `context/product.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Finalize to `context/product.md` after approval.
             > "Based on the completed track, I propose the following updates to the **Product Definition**:"
             > ```diff
             > [Proposed changes here, ideally in a diff format]
             > ```
             > "Do you approve these changes? (yes/no)"
         iii. **Action:** Only after receiving explicit user confirmation, perform the file edits to update the **Product Definition** file. Keep a record of whether this file was changed.
-    c.  **Update Tech Stack:**
+    f.  **Update Tech Stack:**
         i. **Condition for Update:** Similarly, you MUST determine if significant changes in the technology stack are detected as a result of the completed track.
-        ii. **Propose and Confirm Changes:** If an update is needed, generate the proposed changes. Then, present them to the user for confirmation:
+        ii. **Propose and Confirm Changes (Document-Embedded):** If an update is needed, write proposed changes into `context/tech-stack.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Finalize to `context/tech-stack.md` after approval.
             > "Based on the completed track, I propose the following updates to the **Tech Stack**:"
             > ```diff
             > [Proposed changes here, ideally in a diff format]
             > ```
             > "Do you approve these changes? (yes/no)"
         iii. **Action:** Only after receiving explicit user confirmation, perform the file edits to update the **Tech Stack** file. Keep a record of whether this file was changed.
-    d. **Update Product Guidelines (Strictly Controlled):**
+    g. **Update Product Guidelines (Strictly Controlled):**
         i. **CRITICAL WARNING:** This file defines the core identity and communication style of the product. It should be modified with extreme caution and ONLY in cases of significant strategic shifts, such as a product rebrand or a fundamental change in user engagement philosophy. Routine feature updates or bug fixes should NOT trigger changes to this file.
         ii. **Condition for Update:** You may ONLY propose an update to this file if the track's **Specification** explicitly describes a change that directly impacts branding, voice, tone, or other core product guidelines.
-        iii. **Propose and Confirm Changes:** If the conditions are met, you MUST generate the proposed changes and present them to the user with a clear warning:
+        iii. **Propose and Confirm Changes (Document-Embedded):** If the conditions are met, write proposed changes into `context/product-guidelines.draft.md`, ask the user to edit inline, and re-read/summarize changes until approved. Include the same warning in the draft header. Finalize to `context/product-guidelines.md` after approval.
             > "WARNING: The completed track suggests a change to the core **Product Guidelines**. This is an unusual step. Please review carefully:"
             > ```diff
             > [Proposed changes here, ideally in a diff format]
@@ -124,10 +139,10 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
             > "Do you approve these critical changes to the **Product Guidelines**? (yes/no)"
         iv. **Action:** Only after receiving explicit user confirmation, perform the file edits. Keep a record of whether this file was changed.
 
-6.  **Final Report:** Announce the completion of the synchronization process and provide a summary of the actions taken.
+4.1.6.  **Final Report:** Announce the completion of the synchronization process and provide a summary of the actions taken.
     - **Construct the Message:** Based on the records of which files were changed, construct a summary message.
     - **Commit Changes:**
-        - If any files were changed (**Product Definition**, **Tech Stack**, or **Product Guidelines**), you MUST stage them and commit them.
+        - If any files were changed (**Product Definition**, **Tech Stack**, **Product Guidelines**, **Project Spec**, **Requirements Index**, or **Decision Log**), you MUST stage them and commit them.
         - **Commit Message:** `docs(context): Synchronize docs for track '<track_description>'`
     - **Example (if Product Definition was changed, but others were not):**
         > "Documentation synchronization is complete.
@@ -139,19 +154,19 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 ---
 
-## 5.0 TRACK CLEANUP
+## 5.1 TRACK CLEANUP
 **PROTOCOL: Offer to archive or delete the completed track.**
 
-1.  **Execution Trigger:** This protocol MUST only be executed after the current track has been successfully implemented and the `SYNCHRONIZE PROJECT DOCUMENTATION` step is complete.
+5.1.1.  **Execution Trigger:** This protocol MUST only be executed after the current track has been successfully implemented and the `SYNCHRONIZE PROJECT DOCUMENTATION` step is complete.
 
-2.  **Ask for User Choice:** You MUST prompt the user with the available options for the completed track.
+5.1.2.  **Ask for User Choice:** You MUST prompt the user with the available options for the completed track.
     > "Track '<track_description>' is now complete. What would you like to do?
     > A.  **Archive:** Move the track's folder to `context/archive/` and remove it from the tracks file.
     > B.  **Delete:** Permanently delete the track's folder and remove it from the tracks file.
     > C.  **Skip:** Do nothing and leave it in the tracks file.
     > Please enter the number of your choice (A, B, or C)."
 
-3.  **Handle User Response:**
+5.1.3.  **Handle User Response:**
     *   **If user chooses "A" (Archive):**
         i.   **Create Archive Directory:** Check for the existence of `context/archive/`. If it does not exist, create it.
         ii.  **Archive Track Folder:** Move the track's folder from its current location (resolved via the **Tracks Directory**) to `context/archive/<track_id>`.
